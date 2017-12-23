@@ -1,21 +1,10 @@
 use super::error::Result;
+use super::hadoop_hdfs::GetFileInfoRequestProto;
+use super::namenode::NamenodeConnection;
 
-use std::io::Write;
-use std::net::{TcpStream, ToSocketAddrs};
+use std::net::ToSocketAddrs;
 use std::path::Path;
 use std::time::SystemTime;
-
-const RPC_VERSION: u8 = 0x09;
-const SERVICE_CLASS: u8 = 0x0;
-const AUTH_PROTOCOL: u8 = 0x0;
-const PROTOCOL_CLASS: &str = "org.apache.hadoop.hdfs.protocol.ClientProtocol";
-const PROTOCOL_CLASS_VERSION: u8 = 1;
-const HANDSHAKE_CALL_ID: i8 = -3;
-const STANDBY_EXCEPTION_CLASS: &str = "org.apache.hadoop.ipc.StandbyException";
-
-pub struct Client {
-    stream: TcpStream,
-}
 
 #[derive(Clone, Debug)]
 pub struct Metadata;
@@ -26,26 +15,27 @@ pub struct FileType;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Permissions;
 
+pub struct Client {
+    namenode: NamenodeConnection,
+}
+
 impl Client {
-    fn new<A: ToSocketAddrs>(addr: A) -> Result<Client> {
-        let mut stream = TcpStream::connect(addr)?;
-
-        let rpc_header = [
-            b'h',
-            b'r',
-            b'p',
-            b'c',
-            RPC_VERSION,
-            SERVICE_CLASS,
-            AUTH_PROTOCOL,
-        ];
-
-        stream.write_all(&rpc_header)?;
-
-        Ok(Client { stream: stream })
+    pub fn new<A: ToSocketAddrs>(addr: A) -> Result<Client> {
+        Ok(Client {
+            namenode: NamenodeConnection::new(addr)?,
+        })
     }
 
-    fn metadata<P: AsRef<Path>>(path: P) -> Result<Metadata> {
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata> {
+        let path = path.as_ref();
+
+        let req = {
+            let mut req = GetFileInfoRequestProto::new();
+            req.set_src(path.to_string_lossy().into_owned());
+            req
+        };
+
+        let resp = self.namenode.execute("getFileInfo", &req)?;
         unimplemented!()
     }
 }
@@ -113,8 +103,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_client() {
+    fn test_client_new() {
         let client = Client::new("localhost:9000");
         assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_client_metadata() {
+        let client = Client::new("localhost:9000");
+        assert!(client.is_ok());
+
+        let client = client.unwrap();
+        let metadata = client.metadata("/data/");
+
+        assert!(metadata.is_ok());
     }
 }

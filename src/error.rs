@@ -1,5 +1,6 @@
 use std;
 
+#[derive(Debug)]
 pub enum HdfsError {
     IO(std::io::Error),
 }
