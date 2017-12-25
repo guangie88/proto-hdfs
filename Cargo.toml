@@ -4,4 +4,5 @@ version = "0.0.1"
 authors = ["Chen Weiguang <chen.weiguang@gmail.com>"]
 
 [dependencies]
-protobuf = "1.4.3"
+byteorder = "1.2"
+protobuf = "1.4"

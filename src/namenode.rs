@@ -4,6 +4,9 @@ use super::hadoop_common::{IpcConnectionContextProto, RpcKindProto,
                            RpcRequestHeaderProto_OperationProto,
                            UserInformationProto};
 use super::hadoop_hdfs::{GetFileInfoRequestProto, GetFileInfoResponseProto};
+use super::rpc::make_rpc_packet;
+
+use protobuf::Message;
 
 use std::io::Write;
 use std::net::{TcpStream, ToSocketAddrs};
@@ -57,7 +60,7 @@ impl NamenodeConnection {
         unimplemented!()
     }
 
-    fn write_namenode_handshake(&self) -> Result<()> {
+    fn write_namenode_handshake(&mut self) -> Result<()> {
         let rpc_header = [
             b'h',
             b'r',
@@ -72,8 +75,13 @@ impl NamenodeConnection {
             new_rpc_request_header(HANDSHAKE_CALL_ID as i32, &self.client_id);
 
         let context = new_connection_context(&self.user);
+        let packet = make_rpc_packet(
+            vec![&header as &Message, &context as &Message].into_iter(),
+        )?;
 
-        unimplemented!()
+        self.stream.write_all(&rpc_header)?;
+        self.stream.write_all(packet.as_slice())?;
+        Ok(())
     }
 
     fn resolve_connection(&self) -> Result<()> {
