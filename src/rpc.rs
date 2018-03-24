@@ -1,4 +1,4 @@
-use super::error::Result;
+use error::Result;
 
 use byteorder::{NativeEndian, WriteBytesExt};
 use protobuf::Message;
@@ -14,7 +14,10 @@ fn make_prefixed_message(msg: &Message) -> Result<Vec<u8>> {
         len_bytes
     };
 
-    Ok(msg_bytes.into_iter().chain(len_bytes.into_iter()).collect())
+    Ok(msg_bytes
+        .into_iter()
+        .chain(len_bytes.into_iter())
+        .collect())
 }
 
 pub fn make_rpc_packet<'a, I>(msgs: I) -> Result<Vec<u8>>

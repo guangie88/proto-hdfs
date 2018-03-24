@@ -1,10 +1,9 @@
-use super::error::Result;
-use super::hadoop_common::{IpcConnectionContextProto, RpcKindProto,
-                           RpcRequestHeaderProto,
-                           RpcRequestHeaderProto_OperationProto,
-                           UserInformationProto};
-use super::hadoop_hdfs::{GetFileInfoRequestProto, GetFileInfoResponseProto};
-use super::rpc::make_rpc_packet;
+use error::Result;
+use hadoop_common::{IpcConnectionContextProto, RpcKindProto,
+                    RpcRequestHeaderProto,
+                    RpcRequestHeaderProto_OperationProto, UserInformationProto};
+use hadoop_hdfs::{GetFileInfoRequestProto, GetFileInfoResponseProto};
+use rpc::make_rpc_packet;
 
 use protobuf::Message;
 

@@ -1,9 +1,8 @@
-use super::error::Result;
-use super::hadoop_hdfs::GetFileInfoRequestProto;
-use super::namenode::NamenodeConnection;
+use error::Result;
+use hadoop_hdfs::GetFileInfoRequestProto;
+use namenode::NamenodeConnection;
 
 use std::net::ToSocketAddrs;
-use std::path::Path;
 use std::time::SystemTime;
 
 #[derive(Clone, Debug)]
@@ -26,16 +25,11 @@ impl Client {
         })
     }
 
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> Result<Metadata> {
-        let path = path.as_ref();
-
-        let req = {
-            let mut req = GetFileInfoRequestProto::new();
-            req.set_src(path.to_string_lossy().into_owned());
-            req
-        };
-
+    fn metadata<P: Into<String>>(&self, path: P) -> Result<Metadata> {
+        let mut req = GetFileInfoRequestProto::new();
+        req.set_src(path.into());
         let resp = self.namenode.execute("getFileInfo", &req)?;
+
         unimplemented!()
     }
 }
