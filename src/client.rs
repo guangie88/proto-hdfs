@@ -1,12 +1,15 @@
 use error::Result;
-use hadoop_hdfs::GetFileInfoRequestProto;
+use hadoop_hdfs::{GetFileInfoRequestProto, HdfsFileStatusProto};
 use namenode::NamenodeConnection;
 
 use std::net::ToSocketAddrs;
 use std::time::SystemTime;
 
 #[derive(Clone, Debug)]
-pub struct Metadata;
+pub struct Metadata {
+    name: String,
+    status: HdfsFileStatusProto,
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct FileType;
@@ -26,15 +29,28 @@ impl Client {
     }
 
     fn metadata<P: Into<String>>(&self, path: P) -> Result<Metadata> {
+        let path = path.into();
+        let name = path.clone();
+
         let mut req = GetFileInfoRequestProto::new();
         req.set_src(path.into());
-        let resp = self.namenode.execute("getFileInfo", &req)?;
 
-        unimplemented!()
+        let resp = self.namenode.execute("getFileInfo", &req)?;
+        Ok(Metadata::new(name, resp.get_fs().clone()))
     }
 }
 
 impl Metadata {
+    pub fn new<S>(name: S, status: HdfsFileStatusProto) -> Metadata
+    where
+        S: Into<String>,
+    {
+        Metadata {
+            name: name.into(),
+            status,
+        }
+    }
+
     pub fn file_type(&self) -> FileType {
         unimplemented!()
     }
