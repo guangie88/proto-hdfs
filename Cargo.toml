@@ -1,0 +1,8 @@
+[package]
+name = "proto-hdfs"
+version = "0.0.0"
+authors = ["Chen Weiguang <chen.weiguang@gmail.com>"]
+
+[dependencies]
+byteorder = "1.2"
+protobuf = "1.4"
