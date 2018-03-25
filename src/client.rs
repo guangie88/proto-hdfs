@@ -28,7 +28,7 @@ impl Client {
         })
     }
 
-    fn metadata<P: Into<String>>(&self, path: P) -> Result<Metadata> {
+    fn metadata<P: Into<String>>(&mut self, path: P) -> Result<Metadata> {
         let path = path.into();
         let name = path.clone();
 
