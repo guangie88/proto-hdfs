@@ -1,5 +1,6 @@
 use error::Result;
-use hadoop_hdfs::{GetFileInfoRequestProto, HdfsFileStatusProto};
+use hadoop_hdfs::{GetFileInfoRequestProto, GetFileInfoResponseProto,
+                  HdfsFileStatusProto};
 use namenode::NamenodeConnection;
 
 use std::net::ToSocketAddrs;
@@ -35,7 +36,11 @@ impl Client {
         let mut req = GetFileInfoRequestProto::new();
         req.set_src(path.into());
 
-        let resp = self.namenode.execute("getFileInfo", &req)?;
+        let mut resp = GetFileInfoResponseProto::new();
+
+        self.namenode
+            .execute("getFileInfo", req, &mut resp)?;
+
         Ok(Metadata::new(name, resp.get_fs().clone()))
     }
 }
@@ -123,7 +128,7 @@ mod tests {
         let client = Client::new("localhost:9000");
         assert!(client.is_ok());
 
-        let client = client.unwrap();
+        let mut client = client.unwrap();
         let metadata = client.metadata("/data/");
 
         assert!(metadata.is_ok());

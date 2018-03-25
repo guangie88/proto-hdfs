@@ -59,31 +59,30 @@ fn new_connection_context(user: &str) -> IpcConnectionContextProto {
 }
 
 impl NamenodeConnection {
-    fn write_request(
-        &mut self,
-        method: &str,
-        req_id: isize,
-        req: &GetFileInfoRequestProto,
-    ) -> Result<()> {
+    fn write_request<S, M>(&mut self, method: S, req: M) -> Result<()>
+    where
+        S: AsRef<str>,
+        M: Message,
+    {
         let rrh = new_rpc_request_header(
             self.req_id.load(Ordering::Relaxed) as i32,
             &self.client_id,
         );
 
+        let method = method.as_ref();
         let rh = new_request_header(method);
 
         let req_bytes = make_rpc_packet(
-            vec![
-                &rrh as &Message,
-                &rh as &Message,
-                req as &Message,
-            ].into_iter(),
+            vec![&rrh as &Message, &rh as &Message, &req].into_iter(),
         )?;
 
         Ok(self.stream.write_all(&req_bytes)?)
     }
 
-    fn read_response(&self, method: &str) -> Result<GetFileInfoResponseProto> {
+    fn read_response<S>(&self, method: S, resp: &mut Message) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         // TODO
         unimplemented!()
     }
@@ -140,15 +139,21 @@ impl NamenodeConnection {
         })
     }
 
-    pub fn execute(
+    pub fn execute<S, M>(
         &mut self,
-        method: &str,
-        req: &GetFileInfoRequestProto,
-    ) -> Result<GetFileInfoResponseProto> {
+        method: S,
+        req: M,
+        resp: &mut Message,
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+        M: Message,
+    {
         let curr_req_id = self.req_id.fetch_add(1, Ordering::Relaxed);
+        self.resolve_connection()?;
 
-        // self.resolve_connection()?;
-        self.write_request(method, curr_req_id, req)?;
-        self.read_response(method)
+        let method = method.as_ref();
+        self.write_request(method, req)?;
+        self.read_response(method, resp)
     }
 }
