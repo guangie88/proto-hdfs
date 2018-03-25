@@ -8,6 +8,3 @@ pub mod client;
 pub mod error;
 pub mod namenode;
 pub mod rpc;
-
-pub use client::*;
-pub use error::*;
