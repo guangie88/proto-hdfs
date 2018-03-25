@@ -1,12 +1,16 @@
 use error::Result;
-use hadoop_hdfs::GetFileInfoRequestProto;
+use hadoop_hdfs::{GetFileInfoRequestProto, GetFileInfoResponseProto,
+                  HdfsFileStatusProto};
 use namenode::NamenodeConnection;
 
 use std::net::ToSocketAddrs;
 use std::time::SystemTime;
 
 #[derive(Clone, Debug)]
-pub struct Metadata;
+pub struct Metadata {
+    name: String,
+    status: HdfsFileStatusProto,
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct FileType;
@@ -25,16 +29,33 @@ impl Client {
         })
     }
 
-    fn metadata<P: Into<String>>(&self, path: P) -> Result<Metadata> {
+    fn metadata<P: Into<String>>(&mut self, path: P) -> Result<Metadata> {
+        let path = path.into();
+        let name = path.clone();
+
         let mut req = GetFileInfoRequestProto::new();
         req.set_src(path.into());
-        let resp = self.namenode.execute("getFileInfo", &req)?;
 
-        unimplemented!()
+        let mut resp = GetFileInfoResponseProto::new();
+
+        self.namenode
+            .execute("getFileInfo", req, &mut resp)?;
+
+        Ok(Metadata::new(name, resp.get_fs().clone()))
     }
 }
 
 impl Metadata {
+    pub fn new<S>(name: S, status: HdfsFileStatusProto) -> Metadata
+    where
+        S: Into<String>,
+    {
+        Metadata {
+            name: name.into(),
+            status,
+        }
+    }
+
     pub fn file_type(&self) -> FileType {
         unimplemented!()
     }
@@ -107,7 +128,7 @@ mod tests {
         let client = Client::new("localhost:9000");
         assert!(client.is_ok());
 
-        let client = client.unwrap();
+        let mut client = client.unwrap();
         let metadata = client.metadata("/data/");
 
         assert!(metadata.is_ok());

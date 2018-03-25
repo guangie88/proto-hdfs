@@ -1,5 +1,7 @@
 version: '2'
 services:
   hdfs-server:
-    image: mdouchement/hdfs:latest
-    network_mode: host
+    image: dockerq/docker-hdfs:latest
+    ports:
+      - 9000:9000
+      - 50070:50070
